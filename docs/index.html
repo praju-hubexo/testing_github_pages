@@ -411,7 +411,7 @@
         </p>
     </div>
 
-    <script async src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js" onload="initializePyodide()"></script>
     <script>
         let pyodideReady = false;
         let py = null;
@@ -419,126 +419,24 @@
         async function initializePyodide() {
             try {
                 py = await loadPyodide();
-                
-                // Install FastAPI and required packages
-                await py.loadPackage(['micropip']);
-                const micropip = py.pyimport('micropip');
-                await micropip.install('fastapi');
-                
-                // Run the API code
-                await py.runPythonAsync(`
-from fastapi import FastAPI, HTTPException
-from datetime import datetime
-from typing import Optional
-from starlette.routing import Mount
-from starlette.applications import Starlette
-import json
 
-app = FastAPI(
-    title="Time & Greeting API",
-    description="A simple API to get current time and greet users by username",
-    version="1.0.0"
-)
+                // Smoke test only — do NOT install packages here
+                const result = await py.runPythonAsync(`
+import sys, json
+json.dumps({"python_version": sys.version})
+`);
+                console.log('pyodide smoke test result:', result);
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to Time & Greeting API",
-        "endpoints": {
-            "time": "/time - Get current date and time",
-            "greet": "/greet?username=John - Greet a user by username",
-            "health": "/health - Health check"
-        }
-    }
-
-@app.get("/time")
-async def get_time():
-    now = datetime.now()
-    return {
-        "timestamp": now.isoformat(),
-        "date": now.strftime("%Y-%m-%d"),
-        "time": now.strftime("%H:%M:%S"),
-        "day": now.strftime("%A"),
-        "timezone": "UTC"
-    }
-
-@app.get("/greet")
-async def greet_user(username: Optional[str] = None):
-    if not username:
-        raise HTTPException(
-            status_code=400,
-            detail="Username is required. Use /greet?username=YourName"
-        )
-    
-    if not username.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Username cannot be empty"
-        )
-    
-    now = datetime.now()
-    greeting = f"Hello, {username}! 👋"
-    
-    return {
-        "greeting": greeting,
-        "current_time": now.strftime("%H:%M:%S"),
-        "current_date": now.strftime("%Y-%m-%d"),
-        "message": f"Welcome {username}, nice to see you!",
-        "timestamp": now.isoformat()
-    }
-
-@app.get("/greet/{username}")
-async def greet_user_path(username: str):
-    if not username.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="Username cannot be empty"
-        )
-    
-    now = datetime.now()
-    greeting = f"Hello, {username}! 👋"
-    
-    return {
-        "greeting": greeting,
-        "current_time": now.strftime("%H:%M:%S"),
-        "current_date": now.strftime("%Y-%m-%d"),
-        "message": f"Welcome {username}, nice to see you!",
-        "timestamp": now.isoformat()
-    }
-
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "Time & Greeting API"
-    }
-
-@app.get("/info")
-async def app_info():
-    return {
-        "app_name": "Time & Greeting API",
-        "version": "1.0.0",
-        "python_version": "3.11+ (Pyodide)",
-        "server": "Pyodide in Browser",
-        "description": "A simple API to get current time and greet users",
-        "started_at": datetime.now().isoformat()
-    }
-                `);
-                
                 pyodideReady = true;
-                document.getElementById('loadingMessage').innerHTML = 
-                    '<span class="status-indicator status-ready"></span>Python environment ready! API is running in your browser.';
+                document.getElementById('loadingMessage').innerHTML =
+                    '<span class="status-indicator status-ready"></span>Python environment ready! (smoke test)';
                 document.getElementById('loadingMessage').style.background = 'rgba(16, 185, 129, 0.2)';
             } catch (error) {
                 console.error('Pyodide initialization error:', error);
-                document.getElementById('loadingMessage').innerHTML = 
+                document.getElementById('loadingMessage').innerHTML =
                     `<span style="color: #ff6b6b;">⚠️ Error loading Python environment: ${error.message}</span>`;
             }
         }
-
-        // Initialize on page load
-        window.addEventListener('load', initializePyodide);
 
         function toggleEndpoint(header) {
             const endpoint = header.parentElement;
@@ -576,8 +474,10 @@ json.dumps(result)
         }
 
         async function testEndpoint(endpoint) {
-            const responseId = `response-${endpoint.replace(/\//g, '')}`;
-            const responseBodyId = `response-body-${endpoint.replace(/\//g, '')}`;
+            // map '/' to 'root' so it matches the DOM ids
+            const key = endpoint === '/' ? 'root' : endpoint.replace(/\//g, '');
+            const responseId = `response-${key}`;
+            const responseBodyId = `response-body-${key}`;
             
             const responseEl = document.getElementById(responseId);
             const responseBodyEl = document.getElementById(responseBodyId);
