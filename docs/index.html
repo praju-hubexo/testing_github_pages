@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time & Greeting API - Interactive Documentation</title>
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.css">
     <style>
         * {
             margin: 0;
@@ -17,6 +15,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
         }
         
         .header {
@@ -24,13 +23,14 @@
             color: white;
             padding: 40px 20px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
-            font-weight: 700;
         }
         
         .header p {
@@ -39,168 +39,425 @@
         }
         
         .container {
-            max-width: 1200px;
-            margin: 40px auto;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .endpoint {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             overflow: hidden;
         }
         
-        .swagger-ui {
-            padding: 0;
+        .endpoint-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
         }
         
-        .swagger-ui .topbar {
+        .endpoint-header:hover {
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .endpoint-title {
+            font-size: 1.3em;
+            font-weight: 600;
+        }
+        
+        .method-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-right: 15px;
+            font-size: 0.9em;
+        }
+        
+        .endpoint-content {
+            padding: 25px;
             display: none;
         }
         
-        .swagger-ui .info {
-            background: #f8f9fa;
-            border-bottom: 2px solid #667eea;
-            padding: 30px;
+        .endpoint.active .endpoint-content {
+            display: block;
         }
         
-        .swagger-ui .info .title {
-            color: #667eea;
-            font-size: 1.8em;
+        .chevron {
+            transition: transform 0.3s ease;
+            font-size: 1.5em;
         }
         
-        .swagger-ui .opblock {
-            border-radius: 8px;
-            margin: 15px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .endpoint.active .chevron {
+            transform: rotate(180deg);
         }
         
-        .swagger-ui .opblock.opblock-get {
-            background: rgba(97, 175, 254, 0.1);
-            border-left: 4px solid #61affe;
+        .endpoint-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1em;
+            line-height: 1.5;
         }
         
-        .swagger-ui .opblock-summary {
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .param-group {
+            margin-bottom: 20px;
         }
         
-        .swagger-ui .opblock-summary:hover {
-            background: rgba(97, 175, 254, 0.15);
+        .param-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
         }
         
-        .swagger-ui .btn {
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            transition: border-color 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
             border-radius: 6px;
             font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 1em;
         }
         
-        .swagger-ui .btn.try-out {
-            background: #667eea;
-            border: none;
+        .btn-execute {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
+            flex: 1;
         }
         
-        .swagger-ui .btn.try-out:hover {
-            background: #764ba2;
+        .btn-execute:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
         }
         
-        .swagger-ui .btn.execute {
-            background: #10b981;
-            border: none;
-            color: white;
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
         }
         
-        .swagger-ui .btn.execute:hover {
-            background: #059669;
+        .btn-clear:hover {
+            background: #e0e0e0;
         }
         
-        .response-container {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+        .response-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
         }
         
-        .response-code {
+        .response-label {
             font-weight: 600;
-            color: #10b981;
+            color: #333;
             margin-bottom: 10px;
         }
         
         .response-body {
-            background: white;
+            background: #1e1e1e;
+            color: #d4d4d4;
             padding: 15px;
             border-radius: 6px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             overflow-x: auto;
-            color: #2c3e50;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .error {
+            color: #d32f2f;
+        }
+        
+        .success {
+            color: #10b981;
+        }
+        
+        .loading {
+            color: #667eea;
         }
         
         .footer {
-            background: #f8f9fa;
-            padding: 20px;
             text-align: center;
-            color: #666;
-            border-top: 1px solid #e0e0e0;
+            color: white;
+            margin-top: 50px;
+            padding: 20px;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>⏰ Time & Greeting API</h1>
-        <p>Interactive API Documentation - Test Endpoints Live</p>
+        <p>🚀 Interactive API Testing - Test Endpoints Live</p>
     </div>
     
     <div class="container">
-        <div id="swagger-ui"></div>
+        <!-- GET / -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/ - Root Endpoint</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Returns a welcome message and list of available endpoints.</p>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testEndpoint('/')">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-root">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-root"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET /time -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/time - Get Current Time</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Returns the current date and time in multiple formats.</p>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testEndpoint('/time')">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-time">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-time"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET /greet (query) -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/greet - Greet User (Query Parameter)</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Greets a user by their username and shows the current time.</p>
+                <div class="param-group">
+                    <label class="param-label">Username (optional):</label>
+                    <input type="text" id="greet-username" placeholder="e.g., Alice" value="Alice">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testGreetQuery()">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-greet-query">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-greet-query"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET /greet/{username} -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/greet/{username} - Greet User (Path Parameter)</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Alternative endpoint to greet a user using path parameter.</p>
+                <div class="param-group">
+                    <label class="param-label">Username (required):</label>
+                    <input type="text" id="greet-path-username" placeholder="e.g., Alice" value="Alice">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testGreetPath()">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-greet-path">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-greet-path"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET /health -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/health - Health Check</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Simple health check endpoint to verify the API is running.</p>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testEndpoint('/health')">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-health">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-health"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET /info -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <div>
+                    <span class="method-badge">GET</span>
+                    <span class="endpoint-title">/info - Application Info</span>
+                </div>
+                <div class="chevron">▼</div>
+            </div>
+            <div class="endpoint-content">
+                <p class="endpoint-description">Returns application metadata and version information.</p>
+                <div class="button-group">
+                    <button class="btn btn-execute" onclick="testEndpoint('/info')">🚀 Execute</button>
+                </div>
+                <div class="response-section hidden" id="response-info">
+                    <div class="response-label">Response:</div>
+                    <div class="response-body" id="response-body-info"></div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="footer">
-        <p>🚀 Built with FastAPI | Powered by Swagger UI</p>
+        <p>⚡ Built with FastAPI | 📚 Interactive API Documentation</p>
+        <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+            💡 Tip: Make sure your API is running on <code>http://localhost:8000</code>
+        </p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"></script>
-    
     <script>
-        window.onload = function() {
-            const ui = SwaggerUIBundle({
-                url: "https://raw.githubusercontent.com/praju-hubexo/testing_github_pages/main/openapi.json",
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIBundle.SwaggerUIStandalonePreset
-                ],
-                plugins: [
-                    SwaggerUIBundle.plugins.DownloadUrl
-                ],
-                layout: "StandaloneLayout",
-                tryItOutEnabled: true,
-                requestInterceptor: (request) => {
-                    // Log all requests
-                    console.log("API Request:", request);
-                    return request;
-                },
-                responseInterceptor: (response) => {
-                    // Log all responses
-                    console.log("API Response:", response);
-                    return response;
-                },
-                onFailure: function(error) {
-                    console.error("Error loading Swagger UI:", error);
-                    document.getElementById('swagger-ui').innerHTML = `
-                        <div style="padding: 40px; text-align: center; color: #d32f2f;">
-                            <h2>⚠️ Failed to load API specification</h2>
-                            <p>Make sure the openapi.json file is available in the repository.</p>
-                            <p style="margin-top: 20px; font-size: 0.9em; color: #999;">Error: ${error.message || 'Unknown error'}</p>
-                        </div>
-                    `;
-                }
-            });
-            window.ui = ui;
+        const BASE_URL = 'http://localhost:8000';
+        
+        function toggleEndpoint(header) {
+            const endpoint = header.parentElement;
+            endpoint.classList.toggle('active');
+        }
+        
+        async function testEndpoint(endpoint) {
+            const responseId = `response-${endpoint.replace('/', '')}`;
+            const responseBodyId = `response-body-${endpoint.replace('/', '')}`;
+            
+            const responseEl = document.getElementById(responseId);
+            const responseBodyEl = document.getElementById(responseBodyId);
+            
+            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.className = 'response-body loading';
+            responseEl.classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                responseBodyEl.textContent = JSON.stringify(data, null, 2);
+                responseBodyEl.className = 'response-body success';
+            } catch (error) {
+                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.className = 'response-body error';
+            }
+        }
+        
+        async function testGreetQuery() {
+            const username = document.getElementById('greet-username').value || 'Guest';
+            const responseId = 'response-greet-query';
+            const responseBodyId = 'response-body-greet-query';
+            
+            const responseEl = document.getElementById(responseId);
+            const responseBodyEl = document.getElementById(responseBodyId);
+            
+            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.className = 'response-body loading';
+            responseEl.classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/greet?username=${encodeURIComponent(username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                responseBodyEl.textContent = JSON.stringify(data, null, 2);
+                responseBodyEl.className = 'response-body success';
+            } catch (error) {
+                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.className = 'response-body error';
+            }
+        }
+        
+        async function testGreetPath() {
+            const username = document.getElementById('greet-path-username').value || 'Guest';
+            const responseId = 'response-greet-path';
+            const responseBodyId = 'response-body-greet-path';
+            
+            const responseEl = document.getElementById(responseId);
+            const responseBodyEl = document.getElementById(responseBodyId);
+            
+            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.className = 'response-body loading';
+            responseEl.classList.remove('hidden');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/greet/${encodeURIComponent(username)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                responseBodyEl.textContent = JSON.stringify(data, null, 2);
+                responseBodyEl.className = 'response-body success';
+            } catch (error) {
+                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.className = 'response-body error';
+            }
         }
     </script>
 </body>
