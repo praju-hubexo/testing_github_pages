@@ -3,52 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time & Greeting API - Swagger UI</title>
+    <title>Time & Greeting API - Interactive Documentation</title>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.css">
     <style>
-        body {
+        * {
             margin: 0;
             padding: 0;
-            background: #fafafa;
+            box-sizing: border-box;
         }
-        .topbar {
-            background-color: #389f8f;
-            padding: 10px 0;
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
             text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .swagger-ui {
+            padding: 0;
+        }
+        
+        .swagger-ui .topbar {
+            display: none;
+        }
+        
+        .swagger-ui .info {
+            background: #f8f9fa;
+            border-bottom: 2px solid #667eea;
+            padding: 30px;
+        }
+        
+        .swagger-ui .info .title {
+            color: #667eea;
+            font-size: 1.8em;
+        }
+        
+        .swagger-ui .opblock {
+            border-radius: 8px;
+            margin: 15px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .swagger-ui .opblock.opblock-get {
+            background: rgba(97, 175, 254, 0.1);
+            border-left: 4px solid #61affe;
+        }
+        
+        .swagger-ui .opblock-summary {
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .swagger-ui .opblock-summary:hover {
+            background: rgba(97, 175, 254, 0.15);
+        }
+        
+        .swagger-ui .btn {
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .swagger-ui .btn.try-out {
+            background: #667eea;
+            border: none;
             color: white;
         }
-        .topbar h1 {
-            margin: 0;
-            font-size: 24px;
+        
+        .swagger-ui .btn.try-out:hover {
+            background: #764ba2;
+        }
+        
+        .swagger-ui .btn.execute {
+            background: #10b981;
+            border: none;
+            color: white;
+        }
+        
+        .swagger-ui .btn.execute:hover {
+            background: #059669;
+        }
+        
+        .response-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .response-code {
+            font-weight: 600;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        
+        .response-body {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            color: #2c3e50;
+        }
+        
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
         }
     </style>
 </head>
 <body>
-    <div class="topbar">
+    <div class="header">
         <h1>⏰ Time & Greeting API</h1>
+        <p>Interactive API Documentation - Test Endpoints Live</p>
     </div>
-    <div id="swagger-ui"></div>
     
+    <div class="container">
+        <div id="swagger-ui"></div>
+    </div>
+    
+    <div class="footer">
+        <p>🚀 Built with FastAPI | Powered by Swagger UI</p>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js"></script>
+    
     <script>
-        const ui = SwaggerUIBundle({
-            url: "https://raw.githubusercontent.com/praju-hubexo/testing_github_pages/main/openapi.json",
-            dom_id: '#swagger-ui',
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIBundle.SwaggerUIStandalonePreset
-            ],
-            layout: "BaseLayout",
-            onComplete: function() {
-                console.log("Swagger UI loaded successfully");
-            },
-            onFailure: function(error) {
-                console.error("Error loading Swagger UI:", error);
-                // Fallback message
-                document.getElementById('swagger-ui').innerHTML = '<h2 style="text-align: center; padding: 20px; color: #d32f2f;">Failed to load API specification. Make sure openapi.json is available.</h2>';
-            }
-        });
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: "https://raw.githubusercontent.com/praju-hubexo/testing_github_pages/main/openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                tryItOutEnabled: true,
+                requestInterceptor: (request) => {
+                    // Log all requests
+                    console.log("API Request:", request);
+                    return request;
+                },
+                responseInterceptor: (response) => {
+                    // Log all responses
+                    console.log("API Response:", response);
+                    return response;
+                },
+                onFailure: function(error) {
+                    console.error("Error loading Swagger UI:", error);
+                    document.getElementById('swagger-ui').innerHTML = `
+                        <div style="padding: 40px; text-align: center; color: #d32f2f;">
+                            <h2>⚠️ Failed to load API specification</h2>
+                            <p>Make sure the openapi.json file is available in the repository.</p>
+                            <p style="margin-top: 20px; font-size: 0.9em; color: #999;">Error: ${error.message || 'Unknown error'}</p>
+                        </div>
+                    `;
+                }
+            });
+            window.ui = ui;
+        }
     </script>
 </body>
 </html>
