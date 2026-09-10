@@ -38,6 +38,16 @@
             opacity: 0.95;
         }
         
+        .loading-message {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+        
         .container {
             max-width: 1000px;
             margin: 0 auto;
@@ -154,9 +164,14 @@
             flex: 1;
         }
         
-        .btn-execute:hover {
+        .btn-execute:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-execute:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .btn-clear {
@@ -191,18 +206,20 @@
             line-height: 1.5;
             white-space: pre-wrap;
             word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .error {
-            color: #d32f2f;
+            color: #ff6b6b;
         }
         
         .success {
-            color: #10b981;
+            color: #51cf66;
         }
         
         .loading {
-            color: #667eea;
+            color: #74c0fc;
         }
         
         .footer {
@@ -215,15 +232,43 @@
         .hidden {
             display: none;
         }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-loading {
+            background: #fbbf24;
+        }
+
+        .status-ready {
+            background: #10b981;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>⏰ Time & Greeting API</h1>
-        <p>🚀 Interactive API Testing - Test Endpoints Live</p>
+        <p>🚀 Interactive API Testing - Python Running in Browser</p>
     </div>
     
     <div class="container">
+        <div class="loading-message" id="loadingMessage">
+            <span class="status-indicator status-loading"></span>
+            Loading Python environment... This may take 30-60 seconds on first load.
+        </div>
+        
         <!-- GET / -->
         <div class="endpoint">
             <div class="endpoint-header" onclick="toggleEndpoint(this)">
@@ -360,48 +405,197 @@
     </div>
     
     <div class="footer">
-        <p>⚡ Built with FastAPI | 📚 Interactive API Documentation</p>
+        <p>⚡ Built with FastAPI + Pyodide | 🐍 Python Running in Your Browser</p>
         <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
-            💡 Tip: Make sure your API is running on <code>http://localhost:8000</code>
+            💡 No server needed - everything runs locally in your browser!
         </p>
     </div>
 
+    <script async src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
     <script>
-        const BASE_URL = 'http://localhost:8000';
-        
+        let pyodideReady = false;
+        let py = null;
+
+        async function initializePyodide() {
+            try {
+                py = await loadPyodide();
+                
+                // Install FastAPI and required packages
+                await py.loadPackage(['micropip']);
+                const micropip = py.pyimport('micropip');
+                await micropip.install('fastapi');
+                
+                // Run the API code
+                await py.runPythonAsync(`
+from fastapi import FastAPI, HTTPException
+from datetime import datetime
+from typing import Optional
+from starlette.routing import Mount
+from starlette.applications import Starlette
+import json
+
+app = FastAPI(
+    title="Time & Greeting API",
+    description="A simple API to get current time and greet users by username",
+    version="1.0.0"
+)
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Welcome to Time & Greeting API",
+        "endpoints": {
+            "time": "/time - Get current date and time",
+            "greet": "/greet?username=John - Greet a user by username",
+            "health": "/health - Health check"
+        }
+    }
+
+@app.get("/time")
+async def get_time():
+    now = datetime.now()
+    return {
+        "timestamp": now.isoformat(),
+        "date": now.strftime("%Y-%m-%d"),
+        "time": now.strftime("%H:%M:%S"),
+        "day": now.strftime("%A"),
+        "timezone": "UTC"
+    }
+
+@app.get("/greet")
+async def greet_user(username: Optional[str] = None):
+    if not username:
+        raise HTTPException(
+            status_code=400,
+            detail="Username is required. Use /greet?username=YourName"
+        )
+    
+    if not username.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Username cannot be empty"
+        )
+    
+    now = datetime.now()
+    greeting = f"Hello, {username}! 👋"
+    
+    return {
+        "greeting": greeting,
+        "current_time": now.strftime("%H:%M:%S"),
+        "current_date": now.strftime("%Y-%m-%d"),
+        "message": f"Welcome {username}, nice to see you!",
+        "timestamp": now.isoformat()
+    }
+
+@app.get("/greet/{username}")
+async def greet_user_path(username: str):
+    if not username.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Username cannot be empty"
+        )
+    
+    now = datetime.now()
+    greeting = f"Hello, {username}! 👋"
+    
+    return {
+        "greeting": greeting,
+        "current_time": now.strftime("%H:%M:%S"),
+        "current_date": now.strftime("%Y-%m-%d"),
+        "message": f"Welcome {username}, nice to see you!",
+        "timestamp": now.isoformat()
+    }
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "Time & Greeting API"
+    }
+
+@app.get("/info")
+async def app_info():
+    return {
+        "app_name": "Time & Greeting API",
+        "version": "1.0.0",
+        "python_version": "3.11+ (Pyodide)",
+        "server": "Pyodide in Browser",
+        "description": "A simple API to get current time and greet users",
+        "started_at": datetime.now().isoformat()
+    }
+                `);
+                
+                pyodideReady = true;
+                document.getElementById('loadingMessage').innerHTML = 
+                    '<span class="status-indicator status-ready"></span>Python environment ready! API is running in your browser.';
+                document.getElementById('loadingMessage').style.background = 'rgba(16, 185, 129, 0.2)';
+            } catch (error) {
+                console.error('Pyodide initialization error:', error);
+                document.getElementById('loadingMessage').innerHTML = 
+                    `<span style="color: #ff6b6b;">⚠️ Error loading Python environment: ${error.message}</span>`;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initializePyodide);
+
         function toggleEndpoint(header) {
             const endpoint = header.parentElement;
             endpoint.classList.toggle('active');
         }
-        
+
+        async function callPythonEndpoint(endpoint, params = {}) {
+            if (!pyodideReady) {
+                throw new Error('Python environment not ready yet. Please wait...');
+            }
+
+            try {
+                const paramStr = new URLSearchParams(params).toString();
+                const fullEndpoint = paramStr ? `${endpoint}?${paramStr}` : endpoint;
+                
+                const result = await py.runPythonAsync(`
+import json
+from starlette.testclient import TestClient
+
+client = TestClient(app)
+response = client.get("${fullEndpoint}")
+result = {"status": response.status_code, "data": response.json()}
+json.dumps(result)
+                `);
+                
+                const parsed = JSON.parse(result);
+                if (parsed.status === 200) {
+                    return parsed.data;
+                } else {
+                    throw new Error(parsed.data.detail || 'API Error');
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+
         async function testEndpoint(endpoint) {
-            const responseId = `response-${endpoint.replace('/', '')}`;
-            const responseBodyId = `response-body-${endpoint.replace('/', '')}`;
+            const responseId = `response-${endpoint.replace(/\//g, '')}`;
+            const responseBodyId = `response-body-${endpoint.replace(/\//g, '')}`;
             
             const responseEl = document.getElementById(responseId);
             const responseBodyEl = document.getElementById(responseBodyId);
             
-            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.textContent = '⏳ Calling API...';
             responseBodyEl.className = 'response-body loading';
             responseEl.classList.remove('hidden');
             
             try {
-                const response = await fetch(`${BASE_URL}${endpoint}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const data = await response.json();
+                const data = await callPythonEndpoint(endpoint);
                 responseBodyEl.textContent = JSON.stringify(data, null, 2);
                 responseBodyEl.className = 'response-body success';
             } catch (error) {
-                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.textContent = `❌ Error: ${error.message}`;
                 responseBodyEl.className = 'response-body error';
             }
         }
-        
+
         async function testGreetQuery() {
             const username = document.getElementById('greet-username').value || 'Guest';
             const responseId = 'response-greet-query';
@@ -410,27 +604,20 @@
             const responseEl = document.getElementById(responseId);
             const responseBodyEl = document.getElementById(responseBodyId);
             
-            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.textContent = '⏳ Calling API...';
             responseBodyEl.className = 'response-body loading';
             responseEl.classList.remove('hidden');
             
             try {
-                const response = await fetch(`${BASE_URL}/greet?username=${encodeURIComponent(username)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const data = await response.json();
+                const data = await callPythonEndpoint('/greet', { username });
                 responseBodyEl.textContent = JSON.stringify(data, null, 2);
                 responseBodyEl.className = 'response-body success';
             } catch (error) {
-                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.textContent = `❌ Error: ${error.message}`;
                 responseBodyEl.className = 'response-body error';
             }
         }
-        
+
         async function testGreetPath() {
             const username = document.getElementById('greet-path-username').value || 'Guest';
             const responseId = 'response-greet-path';
@@ -439,23 +626,16 @@
             const responseEl = document.getElementById(responseId);
             const responseBodyEl = document.getElementById(responseBodyId);
             
-            responseBodyEl.textContent = '⏳ Loading...';
+            responseBodyEl.textContent = '⏳ Calling API...';
             responseBodyEl.className = 'response-body loading';
             responseEl.classList.remove('hidden');
             
             try {
-                const response = await fetch(`${BASE_URL}/greet/${encodeURIComponent(username)}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                const data = await response.json();
+                const data = await callPythonEndpoint(`/greet/${username}`);
                 responseBodyEl.textContent = JSON.stringify(data, null, 2);
                 responseBodyEl.className = 'response-body success';
             } catch (error) {
-                responseBodyEl.textContent = `❌ Error: ${error.message}\n\nMake sure your API is running at ${BASE_URL}`;
+                responseBodyEl.textContent = `❌ Error: ${error.message}`;
                 responseBodyEl.className = 'response-body error';
             }
         }
